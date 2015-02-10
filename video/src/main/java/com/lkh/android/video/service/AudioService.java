@@ -6,13 +6,14 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
+import android.util.Log;
 
 import java.io.IOException;
 
 /**
  * 后台播放音乐
  */
-public class AudioService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener {
+public class AudioService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener {
     private AudioBinder mBinder = new AudioBinder();
     private MediaPlayer mMediaPlayer;
     /**
@@ -39,7 +40,8 @@ public class AudioService extends Service implements MediaPlayer.OnCompletionLis
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setOnPreparedListener(this);
         mMediaPlayer.setOnCompletionListener(this);
-        mVolume = 0.5f;
+        mMediaPlayer.setOnErrorListener(this);
+        mVolume = 0.8f;
         mMediaPlayer.setVolume(mVolume, mVolume);
     }
 
@@ -47,6 +49,7 @@ public class AudioService extends Service implements MediaPlayer.OnCompletionLis
     public void onDestroy() {
         super.onDestroy();
         if (mMediaPlayer != null){
+            mMediaPlayer.stop();
             mMediaPlayer.release();//释放资源
             mMediaPlayer = null;
         }
@@ -79,8 +82,9 @@ public class AudioService extends Service implements MediaPlayer.OnCompletionLis
      * 加载歌曲目录
      * @param paths
      */
-    public void load(String[] paths){
+    public void load(String[] paths, int position){
         mPaths = paths;
+        mCurrent = position;
     }
 
     /**
@@ -89,6 +93,9 @@ public class AudioService extends Service implements MediaPlayer.OnCompletionLis
     public void previous(){
 
         mCurrent--;
+        if (mCurrent < 0){
+            mCurrent = mPaths.length-1;
+        }
         if (mCurrent < 0){
             mCurrent = 0;
         }
@@ -101,7 +108,7 @@ public class AudioService extends Service implements MediaPlayer.OnCompletionLis
     public void next(){
         mCurrent++;
         if (mCurrent >= mPaths.length){
-            mCurrent = mPaths.length-1;
+            mCurrent = 0;//循环
         }
         startPlay();
     }
@@ -114,10 +121,18 @@ public class AudioService extends Service implements MediaPlayer.OnCompletionLis
         if (mCurrent<0 || mCurrent>=mPaths.length){
             return;
         }
+        if (mMediaPlayer.isPlaying()){
+            mMediaPlayer.stop();
+        }
+
         mMediaPlayer.reset();
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
+            //http://139.227.43.143:8080/strut/DownLoadFileServlet?path=E:&curfile=a
+            Log.i("path=", mPaths[mCurrent]);
             mMediaPlayer.setDataSource(mPaths[mCurrent]);
+
+//            mMediaPlayer.setDataSource("http://139.227.43.143:8080/strut/DownLoadFileServlet?path=E:&curfile=a");
             //异步准备播放，准备好了直接调onPrepared()方法去播放
             mMediaPlayer.prepareAsync();
         } catch (IOException e) {
@@ -159,6 +174,11 @@ public class AudioService extends Service implements MediaPlayer.OnCompletionLis
             mVolume = 0.0f;
         }
         mMediaPlayer.setVolume(mVolume, mVolume);
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra) {
+        return false;
     }
 
     /**
