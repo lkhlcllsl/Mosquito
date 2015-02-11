@@ -18,9 +18,12 @@ package com.lkh.android.base.log;
 import android.text.TextUtils;
 import android.util.Log;
 
-
+/**
+ * 日志工具类
+ */
 public final class LogUtils {
 
+    //总开关
     public static LogMasterSwitch masterSwitch = LogMasterSwitch.ALLON;
 
     public static boolean allowV = true;
@@ -29,7 +32,7 @@ public final class LogUtils {
     public static boolean allowW = true;
     public static boolean allowE = true;
 
-    public static ILog log = new LogCommand();
+    public static ILog log = new LogCommand();//输出到logcat
 
 
     public static void v(String tag, String msg){
@@ -43,4 +46,53 @@ public final class LogUtils {
             log.v(tag, msg);
         }
     }
+
+    public static void d(String tag, String msg){
+        if (masterSwitch == LogMasterSwitch.ALLOFF){
+            return;
+        }
+        if (masterSwitch == LogMasterSwitch.IGNORE && !allowD){
+            return;
+        }
+        if (log != null) {
+            log.d(tag, msg);
+        }
+    }
+
+    public static void i(String tag, String msg){
+        if (masterSwitch == LogMasterSwitch.ALLOFF){
+            return;
+        }
+        if (masterSwitch == LogMasterSwitch.IGNORE && !allowI){
+            return;
+        }
+        if (log != null) {
+            log.i(tag, msg);
+        }
+    }
+
+    public static void w(String tag, String msg){
+        if (masterSwitch == LogMasterSwitch.ALLOFF){
+            return;
+        }
+        if (masterSwitch == LogMasterSwitch.IGNORE && !allowW){
+            return;
+        }
+        if (log != null) {
+            log.w(tag, msg);
+        }
+    }
+
+    public static void e(String tag, String msg){
+        if (masterSwitch == LogMasterSwitch.ALLOFF){
+            return;
+        }
+        if (masterSwitch == LogMasterSwitch.IGNORE && !allowE){
+            return;
+        }
+        if (log != null) {
+            log.e(tag, msg);
+        }
+    }
+
 }
