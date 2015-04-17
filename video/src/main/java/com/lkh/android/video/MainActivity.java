@@ -6,17 +6,35 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.lkh.android.video.service.AudioService;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 
 public class MainActivity extends FragmentActivity {
+    private String[] mPaths;
+    private int mPosition;
 
     AudioService mAudioService;
 
@@ -30,7 +48,20 @@ public class MainActivity extends FragmentActivity {
         Intent intent = new Intent(this, AudioService.class);
         startService(intent);
         bindService(intent, conn, Context.BIND_AUTO_CREATE);
+        getIntentData();
+        initView();
 
+    }
+
+    private void getIntentData() {
+        Intent intent  = getIntent();
+        if (intent != null){
+            mPaths = intent.getStringArrayExtra("paths");
+            mPosition = intent.getIntExtra("position", 0);
+        }
+    }
+
+    private void initView() {
         txtFiles = (TextView) findViewById(R.id.txtFile);
         findViewById(R.id.txtStart).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,19 +84,16 @@ public class MainActivity extends FragmentActivity {
         findViewById(R.id.txtScan).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                unbindService(conn);
+                try{
+                    unbindService(conn);
+                }catch (Exception e){
+
+                }
                 stopService(new Intent(MainActivity.this, AudioService.class));
                 finish();
             }
         });
 
-        findViewById(R.id.txtInit).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String[] p = getFilesPath();
-                mAudioService.load(p);
-            }
-        });
         findViewById(R.id.txtPrevious).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -90,13 +118,14 @@ public class MainActivity extends FragmentActivity {
                 mAudioService.subVolume();
             }
         });
-
     }
 
     private ServiceConnection conn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mAudioService = (AudioService) ((AudioService.AudioBinder)service).getService();
+            mAudioService.load(mPaths, mPosition);
+            mAudioService.startPlay();
         }
 
         @Override
@@ -107,8 +136,13 @@ public class MainActivity extends FragmentActivity {
 
     @Override
     protected void onDestroy() {
+        try{
+            unbindService(conn);
+        }catch (Exception e){
+
+        }
+
         super.onDestroy();
-        unbindService(conn);
     }
 
     private String[] getFilesPath(){
