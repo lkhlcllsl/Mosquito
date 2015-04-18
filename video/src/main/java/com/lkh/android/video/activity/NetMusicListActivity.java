@@ -47,7 +47,7 @@ public class NetMusicListActivity extends FragmentActivity {
         setContentView(R.layout.vd_activity_net_music_list);
         IP = getSharedPreferences("config", MODE_PRIVATE).getString("ip", IP);
         initView();
-        getMusicPath();
+        getMusicPath();1
     }
 
     private void initView() {
