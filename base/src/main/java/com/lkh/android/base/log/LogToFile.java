@@ -1,5 +1,7 @@
 package com.lkh.android.base.log;
 
+import com.lkh.android.base.config.FilePathConfig;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -16,15 +18,12 @@ public class LogToFile implements ILog {
 
     private static final SimpleDateFormat TIMESTAMP_FMT = new SimpleDateFormat(
             "[yyyy-MM-dd HH:mm:ss] ");
-    private String path = android.os.Environment
-            .getExternalStorageDirectory() + "/mosquito/";
     private String basePath = "";
-    private static String LOG_DIR = "log";
     private static String BASE_FILENAME = "ta.log";
     private File logDir;
 
     public void open() {
-        logDir = new File(path+LOG_DIR);
+        logDir = new File(FilePathConfig.ROOT_PATH+FilePathConfig.LOG_DIR);
         if (!logDir.exists()) {
             logDir.mkdirs();
             // do not allow media scan
@@ -132,13 +131,16 @@ public class LogToFile implements ILog {
             mWriter.flush();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            close();
         }
-        close();
     }
 
     public void close() {
         try {
-            mWriter.close();
+            if (mWriter != null) {
+                mWriter.close();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
